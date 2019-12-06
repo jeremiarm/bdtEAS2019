@@ -1,0 +1,59 @@
+node1:
+OS : geerlingguy/centos7
+RAM : 512 MB
+IP : 192.168.16.102
+Aplikasi :
+PD
+TiDB
+Node exporter
+Grafana
+Prometheus
+node2:
+OS : geerlingguy/centos7
+RAM : 512 MB
+IP : 192.168.16.103
+Aplikasi :
+PD
+Node exporter
+node3:
+OS : geerlingguy/centos7
+RAM : 512 MB
+IP : 192.168.16.104
+Aplikasi :
+PD
+Node exporter
+node4:
+OS : geerlingguy/centos7
+RAM : 512 MB
+IP : 192.168.16.105
+Aplikasi :
+TiKV
+Node exporter
+node5:
+OS : geerlingguy/centos7
+RAM : 512 MB
+IP : 192.168.16.106
+Aplikasi :
+TiKV
+Node exporter
+node6:
+OS : geerlingguy/centos7
+RAM : 512 MB
+IP : 192.168.16.107
+Aplikasi :
+TiKV
+Node exporter
+
+What to Do (simple version)
+
+1. download zip dari http://download.pingcap.org/tidb-v3.0-linux-amd64.tar.gz dan buat folder installer, masukan ke situ
+2. vagrant up
+3. ikuti running tidb.txt
+4. masuk ke node 1.
+5. mysql - root -h 192.168.16.102 -P 4000
+6. CREATE DATABASE meetingroom
+7. Create user if not exists 'mradmin'@'%' identified by 'mradmin'; 
+8. grant all privileges on meetingroom.* to 'mradmin'@'%'; 
+9. flush privileges;
+10. pada .env , ubah host jadi node1, username dan password sesuai yang dibuat, database jadi meetingroom
+11. pada project laravel, php artisan migrate, php artisan db:seed, php artisan serve atau php -S localhost:8000 -t public/
