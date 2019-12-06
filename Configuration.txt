@@ -46,14 +46,35 @@ Node exporter
 
 What to Do (simple version)
 
+Instalasi TiDB dan Implementasinya ke Aplikasi
 1. download zip dari http://download.pingcap.org/tidb-v3.0-linux-amd64.tar.gz dan buat folder installer, masukan ke situ
-2. vagrant up
-3. ikuti running tidb.txt
+2. vagrant plugin install vagrant-vbguest, kemudian vagrant up
+3. ikuti running tidb.txt, check dengan curl http://192.168.16.102:2379/pd/api/v1/members
 4. masuk ke node 1.
-5. mysql - root -h 192.168.16.102 -P 4000
+5. mysql -u root -h 192.168.16.102 -P 4000
 6. CREATE DATABASE meetingroom
-7. Create user if not exists 'mradmin'@'%' identified by 'mradmin'; 
+7. create user if not exists 'mradmin'@'%' identified by 'mradmin'; 
 8. grant all privileges on meetingroom.* to 'mradmin'@'%'; 
 9. flush privileges;
 10. pada .env , ubah host jadi node1, username dan password sesuai yang dibuat, database jadi meetingroom
 11. pada project laravel, php artisan migrate, php artisan db:seed, php artisan serve atau php -S localhost:8000 -t public/
+
+
+Instalasi dan Uji Coba Sysbench
+1. masuk ke node 1
+2. curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | sudo bash
+3. sudo yum -y install sysbench
+4. git clone https://github.com/pingcap/tidb-bench.git
+5. cd tidb-bench/sysbench
+6. nano config, ubah host jadi 192.168.16.102 dan db jadi test
+7. ./run.sh point_select prepare 100
+8. ./run.sh point_select run 100
+9. coba dengan 2 PD(vagrant halt node3) dan 1 PD(tidb single)
+
+Uji Coba Jmeter
+1. ip address 127.0.0.1
+2. path /
+3. uji dengan koneksi 500,1000,1500
+
+CHECKING:
+curl http://192.168.16.102:2379/pd/api/v1/members

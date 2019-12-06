@@ -32,3 +32,45 @@ Run on TiDB Server
 //node 1 lagi
 cd tidb-v3.0-linux-amd64
 ./bin/tidb-server --store=tikv --path="192.168.16.102:2379" --log-file=tidb.log &
+
+
+====================================================================================================================================================================================================================================================================================================================================
+
+untuk tidb single (untuk testing sysbench dengan 1 PD)
+
+halt node2 dan node3
+
+Run on PD Server
+
+//node 1
+cd tidb-v3.0-linux-amd64
+./bin/pd-server --name=pd1 --data-dir=pd --client-urls="http://192.168.16.102:2379" --peer-urls="http://192.168.16.102:2380" --initial-cluster="pd1=http://192.168.16.102:2380" --log-file=pd.log &
+
+======================================================
+
+Run on Tikv Server
+
+//node 4
+cd tidb-v3.0-linux-amd64
+./bin/tikv-server --pd="192.168.16.102:2379" --addr="192.168.16.105:20160" --data-dir=tikv --log-file=tikv.log &
+
+//node 5
+cd tidb-v3.0-linux-amd64
+./bin/tikv-server --pd="192.168.16.102:2379" --addr="192.168.16.106:20160" --data-dir=tikv --log-file=tikv.log &
+
+//node 6
+cd tidb-v3.0-linux-amd64
+./bin/tikv-server --pd="192.168.16.102:2379" --addr="192.168.16.107:20160" --data-dir=tikv --log-file=tikv.log &
+
+======================================================
+
+Run on TiDB Server
+
+//node 1 lagi
+cd tidb-v3.0-linux-amd64
+./bin/tidb-server --store=tikv --path="192.168.16.102:2379" --log-file=tidb.log &
+
+
+
+
+=======================================================
