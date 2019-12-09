@@ -345,7 +345,7 @@ scrape_configs:
 ```
 5. Prometheus akan berjalan <br />
 ![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/prometheus_result.jpg) <br />
-6.Install grafana di node 1 dengan menjalankan <br />
+6. Install grafana di node 1 dengan menjalankan <br />
 ```
 wget https://dl.grafana.com/oss/release/grafana-6.5.1.linux-amd64.tar.gz
 
