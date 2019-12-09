@@ -257,6 +257,21 @@ php artisan db:seed
 ![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/CRUD_delete1.jpg) <br />
 ![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/CRUD_delete2.jpg) <br />
 
+# Instalasi Sysbench
+1. masuk ke node 1 dengan ``vagrant ssh node1`` <br />
+2. Jalankan <br />
+```
+curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.rpm.sh | sudo bash
+sudo yum -y install sysbench
+git clone https://github.com/pingcap/tidb-bench.git
+cd tidb-bench/sysbench
+```
+3. Ubah file ``config`` sehingga host menjadi 192.168.16.102 dan db menjadi test <br />
+4. Jalankan untuk melakukan testing <br />
+```
+ ./run.sh point_select prepare 100
+ ./run.sh point_select run 100
+```
 
 # Uji Performa Aplikasi
 1. Jmeter ( testing 100,500, dan 100 koneksi ke http://localhost:8000/ <br />
@@ -270,3 +285,140 @@ php artisan db:seed
 ![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/sysbench_1PD.jpg) <br />
 
 # Implementasi Monitoring Grafana
+1. Masuk ke node 1-6 dan jalankan di masing-masing node perintah di bawah untuk menjalankan node exporter <br />
+```
+cd node_exporter-0.18.1.linux-amd64
+./node_exporter --web.listen-address=":9100" --log.level="info" &
+```
+2. Install Prometheus pada node 1 dengan menjalankan <br />
+```
+wget https://github.com/prometheus/prometheus/releases/download/v2.2.1/prometheus-2.2.1.linux-amd64.tar.gz
+tar -xzf prometheus-2.2.1.linux-amd64.tar.gz
+```
+3. Ubah isi dari file ``prometheus.yml`` yang berada di dalam folder ``prometheus-2.2.1.linux-amd64`` menjadi <br />
+```
+global:
+  scrape_interval:     15s  # By default, scrape targets every 15 seconds.
+  evaluation_interval: 15s  # By default, scrape targets every 15 seconds.
+  # scrape_timeout is set to the global default value (10s).
+  external_labels:
+    cluster: 'test-cluster'
+    monitor: "prometheus"
+
+scrape_configs:
+  - job_name: 'overwritten-nodes'
+    honor_labels: true  # Do not overwrite job & instance labels.
+    static_configs:
+    - targets:
+      - '192.168.16.102:9100'
+      - '192.168.16.103:9100'
+      - '192.168.16.104:9100'
+      - '192.168.16.105:9100'
+      - '192.168.16.106:9100'
+      - '192.168.16.107:9100'
+
+  - job_name: 'tidb'
+    honor_labels: true  # Do not overwrite job & instance labels.
+    static_configs:
+    - targets:
+      - '192.168.16.102:10080'
+
+  - job_name: 'pd'
+    honor_labels: true  # Do not overwrite job & instance labels.
+    static_configs:
+    - targets:
+      - '192.168.16.102:2379'
+      - '192.168.16.103:2379'
+      - '192.168.16.104:2379'
+
+  - job_name: 'tikv'
+    honor_labels: true  # Do not overwrite job & instance labels.
+    static_configs:
+    - targets:
+      - '192.168.16.105:20180'
+      - '192.168.16.106:20180'
+      - '192.168.16.107:20180'
+```
+4.Di dalam folder tersebut, jalankan <br />
+```
+./prometheus --config.file="./prometheus.yml" --web.listen-address=":9090" --web.external-url="http://192.168.16.102:9090/" --web.enable-admin-api --log.level="info" --storage.tsdb.path="./data.metrics" --storage.tsdb.retention="15d" &
+```
+5. Prometheus akan berjalan <br />
+6.Install grafana di node 1 dengan menjalankan <br />
+```
+wget https://dl.grafana.com/oss/release/grafana-6.5.1.linux-amd64.tar.gz
+
+tar -zxf grafana-6.5.1.linux-amd64.tar.gz
+```
+7. Masuk ke folder ``grafana-6.5.1/conf`` dan buat file ``grafana.ini`` <br />
+8. Ubah isi ``grafana.ini`` menjadi <br />
+```
+[paths]
+data = ./data
+logs = ./data/log
+plugins = ./data/plugins
+[server]
+http_port = 3000
+domain = 192.168.16.102
+[database]
+[session]
+[analytics]
+check_for_updates = true
+[security]
+admin_user = admin
+admin_password = admin
+[snapshots]
+[users]
+[auth.anonymous]
+[auth.basic]
+[auth.ldap]
+[smtp]
+[emails]
+[log]
+mode = file
+[log.console]
+[log.file]
+level = info
+format = text
+[log.syslog]
+[event_publisher]
+[dashboards.json]
+enabled = false
+path = ./data/dashboards
+[metrics]
+[grafana_net]
+url = https://grafana.net
+```
+9. Masuk ke folder ``grafana.6.5.1`` dan jalankan <br />
+```
+./bin/grafana-server --config="./conf/grafana.ini" &
+```
+10. Grafana akan berjalan, akses pada browser dengan tujuan ``192.168.16.102:3000`` <br />
+11. Masukkan username ``admin`` dan password ``admin`` <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/grafana_tampilanawal.jpg) <br />
+12. Pada ``home``, pilih ``Create your first data source``, pilih ``Prometheus``, kemudian isikan URL menjadi ``http://192.168.16.102:9090``. Kemudian pilih ``save and test`` <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/grafana_prometheus_datasources.jpg) <br />
+13. Kemudian kembali ke home, pada bagian kiri pilih icon kotak 4 (dashboard), kemudian pilih manage <br />
+14. Pilih import, dan upload file .json dari  https://github.com/pingcap/tidb-ansible/tree/master/scripts <br />
+15. Pada tugas ini , file-file .json yang saya gunakan adalah <br />
+```
+tikv_summary.json
+tikv_details.json
+tikv_trouble_shooting.json
+pd.json
+tidb.json
+tidb_summary.json
+```
+yang sudah saya masukkan ke dalam https://github.com/jeremiarm/bdtEAS2019/tree/master/json <br />
+16. Hasil TIKV SUMMARY <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/grafana_test_cluster_tikv_summary.jpg) <br />
+17. Hasil TIKV DETAILS <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/grafana_test_cluster_tikv_details.jpg) <br />
+18. Hasil TIKV TROUBLE SHOOTING <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/grafana_test_cluster_tikv_troubleshooting.jpg) <br />
+19. Hasil PD <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/grafana_test_cluster_pd.jpg) <br />
+20. Hasil TiDB <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/grafana_test_cluster_tidb.jpg) <br />
+21. Hasil TiDB SUMMARY <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/grafana_test_cluster_tidb_summary.jpg) <br />
