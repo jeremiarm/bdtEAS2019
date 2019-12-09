@@ -344,6 +344,7 @@ scrape_configs:
 ./prometheus --config.file="./prometheus.yml" --web.listen-address=":9090" --web.external-url="http://192.168.16.102:9090/" --web.enable-admin-api --log.level="info" --storage.tsdb.path="./data.metrics" --storage.tsdb.retention="15d" &
 ```
 5. Prometheus akan berjalan <br />
+![alt text](https://github.com/jeremiarm/bdtEAS2019/blob/master/screenshot/prometheus_result.jpg) <br />
 6.Install grafana di node 1 dengan menjalankan <br />
 ```
 wget https://dl.grafana.com/oss/release/grafana-6.5.1.linux-amd64.tar.gz
